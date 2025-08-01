@@ -4,8 +4,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+
+// Страницы
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+
+// Дашборды по ролям
+import UserDashboard from "./components/dashboards/UserDashboard";
+import CollectionPointDashboard from "./components/dashboards/CollectionPointDashboard";
+import FactoryDashboard from "./components/dashboards/FactoryDashboard";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +25,10 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/user" element={<UserDashboard />} />
+            <Route path="/collection-point" element={<CollectionPointDashboard />} />
+            <Route path="/factory" element={<FactoryDashboard />} />
+            {/* универсальная ошибка для всех остальных путей */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

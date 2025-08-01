@@ -1,40 +1,130 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/AuthContext';
-import { Wallet, Upload, Camera, MapPin, Leaf, Recycle, Award } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Wallet,
+  Upload,
+  Camera,
+  MapPin,
+  Leaf,
+  Recycle,
+  Award,
+  LogOut,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const UserDashboard = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [uploadData, setUploadData] = useState({
-    description: '',
-    location: '',
+    description: "",
+    location: "",
     image: null as File | null,
-    video: null as File | null
+    video: null as File | null,
   });
+  const [username, setUsername] = useState("");
+  const [language, setLanguage] = useState<"uz" | "ru" | "en">("uz");
+  const navigate = useNavigate();
 
-  const handleFileUpload = (type: 'image' | 'video', file: File) => {
-    setUploadData(prev => ({ ...prev, [type]: file }));
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("ecochain-username");
+    if (savedUsername) setUsername(savedUsername);
+
+    const savedLang = localStorage.getItem("ecochain-lang") as "uz" | "ru" | "en";
+    if (savedLang) setLanguage(savedLang);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("ecochain-lang", language);
+  }, [language]);
+
+  const t = {
+    uz: {
+      dashboard: "Foydalanuvchi Dashboard",
+      welcome: "Xush kelibsiz",
+      logout: "Chiqish",
+      balance: "Hisobingiz",
+      currentBalance: "Joriy balans",
+      points: "Eco Points",
+      weight: "Yuborilgan chiqindilar",
+      sendWaste: "Chiqindi yuborish",
+      wasteDesc: "Chiqindi haqida ma'lumot va rasmlar yuboring",
+      uploadImage: "Rasm yuklash",
+      uploadVideo: "Video yuklash",
+      location: "Joylashuv",
+      locationPlaceholder: "Chiqindi joylashgan manzilni kiriting",
+      comment: "Izoh",
+      commentPlaceholder: "Chiqindi haqida qo'shimcha ma'lumot...",
+      submit: "Yuborish",
+      recent: "So'nggi faoliyat",
+    },
+    ru: {
+      dashboard: "Панель пользователя",
+      welcome: "Добро пожаловать",
+      logout: "Выйти",
+      balance: "Ваш баланс",
+      currentBalance: "Текущий баланс",
+      points: "Эко Баллы",
+      weight: "Отправленные отходы",
+      sendWaste: "Отправка отходов",
+      wasteDesc: "Отправьте информацию и изображения об отходах",
+      uploadImage: "Загрузить изображение",
+      uploadVideo: "Загрузить видео",
+      location: "Локация",
+      locationPlaceholder: "Введите адрес отходов",
+      comment: "Комментарий",
+      commentPlaceholder: "Дополнительная информация об отходах...",
+      submit: "Отправить",
+      recent: "Последняя активность",
+    },
+    en: {
+      dashboard: "User Dashboard",
+      welcome: "Welcome",
+      logout: "Logout",
+      balance: "Your Balance",
+      currentBalance: "Current Balance",
+      points: "Eco Points",
+      weight: "Waste Sent",
+      sendWaste: "Send Waste",
+      wasteDesc: "Send info and media about the waste",
+      uploadImage: "Upload Image",
+      uploadVideo: "Upload Video",
+      location: "Location",
+      locationPlaceholder: "Enter waste location",
+      comment: "Comment",
+      commentPlaceholder: "Additional information about waste...",
+      submit: "Submit",
+      recent: "Recent Activity",
+    },
+  }[language];
+
+  const handleFileUpload = (type: "image" | "video", file: File) => {
+    setUploadData((prev) => ({ ...prev, [type]: file }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submission
     toast({
-      title: "Chiqindi yuborildi!",
-      description: "Sizning chiqindingiz muvaffaqiyatli yuborildi. Balans yangilanadi.",
+      title: "✅",
+      description: "Chiqindi yuborildi / Waste sent!",
     });
-    
-    // Reset form
+
     setUploadData({
-      description: '',
-      location: '',
+      description: "",
+      location: "",
       image: null,
-      video: null
+      video: null,
     });
   };
 
@@ -48,13 +138,37 @@ const UserDashboard = () => {
               <Leaf className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-eco-dark">Foydalanuvchi Dashboard</h1>
-              <p className="text-muted-foreground">Xush kelibsiz, {user?.username}!</p>
+              <h1 className="text-2xl font-bold text-eco-dark">
+                {t.dashboard}
+              </h1>
+              <p className="text-muted-foreground">
+                {t.welcome}, {username}!
+              </p>
             </div>
           </div>
-          <Button variant="outline" onClick={logout}>
-            Chiqish
-          </Button>
+          <div className="flex gap-3">
+            <Select value={language} onValueChange={(val) => setLanguage(val as any)}>
+              <SelectTrigger className="w-24 h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="uz">O'zbekcha</SelectItem>
+                <SelectItem value="ru">Русский</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+            >
+              {t.logout}
+              <LogOut/>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -63,22 +177,22 @@ const UserDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-primary" />
-                Hisobingiz
+                {t.balance}
               </CardTitle>
-              <CardDescription>Joriy balans</CardDescription>
+              <CardDescription>{t.currentBalance}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-primary mb-4">
-                {user?.balance.toLocaleString()} so'm
+                248 000 so'm
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Award className="h-4 w-4" />
-                  <span>Eco Points: 150</span>
+                  <span>{t.points}: 150</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Recycle className="h-4 w-4" />
-                  <span>Yuborilgan chiqindilar: 12 kg</span>
+                  <span>{t.weight}: 12 kg</span>
                 </div>
               </div>
             </CardContent>
@@ -89,11 +203,9 @@ const UserDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5 text-primary" />
-                Chiqindi yuborish
+                {t.sendWaste}
               </CardTitle>
-              <CardDescription>
-                Chiqindi haqida ma'lumot va rasmlar yuboring
-              </CardDescription>
+              <CardDescription>{t.wasteDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -101,7 +213,7 @@ const UserDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="image" className="flex items-center gap-2">
                       <Camera className="h-4 w-4" />
-                      Rasm yuklash
+                      {t.uploadImage}
                     </Label>
                     <Input
                       id="image"
@@ -109,7 +221,7 @@ const UserDashboard = () => {
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleFileUpload('image', file);
+                        if (file) handleFileUpload("image", file);
                       }}
                     />
                   </div>
@@ -117,7 +229,7 @@ const UserDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="video" className="flex items-center gap-2">
                       <Camera className="h-4 w-4" />
-                      Video yuklash
+                      {t.uploadVideo}
                     </Label>
                     <Input
                       id="video"
@@ -125,7 +237,7 @@ const UserDashboard = () => {
                       accept="video/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleFileUpload('video', file);
+                        if (file) handleFileUpload("video", file);
                       }}
                     />
                   </div>
@@ -134,30 +246,40 @@ const UserDashboard = () => {
                 <div className="space-y-2">
                   <Label htmlFor="location" className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    Joylashuv
+                    {t.location}
                   </Label>
                   <Input
                     id="location"
                     type="text"
                     value={uploadData.location}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Chiqindi joylashgan manzilni kiriting"
+                    onChange={(e) =>
+                      setUploadData((prev) => ({
+                        ...prev,
+                        location: e.target.value,
+                      }))
+                    }
+                    placeholder={t.locationPlaceholder}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Izoh</Label>
+                  <Label htmlFor="description">{t.comment}</Label>
                   <Textarea
                     id="description"
                     value={uploadData.description}
-                    onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Chiqindi haqida qo'shimcha ma'lumot..."
+                    onChange={(e) =>
+                      setUploadData((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder={t.commentPlaceholder}
                     rows={3}
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Chiqindi yuborish
+                <Button type="submit" className="w-full text-lg">
+                  {t.submit}
                 </Button>
               </form>
             </CardContent>
@@ -167,16 +289,31 @@ const UserDashboard = () => {
         {/* Recent Activity */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>So'nggi faoliyat</CardTitle>
+            <CardTitle>{t.recent}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {[
-                { date: '2024-01-15', action: 'Plastik chiqindi yuborildi', amount: '+5,000 so\'m' },
-                { date: '2024-01-12', action: 'Qog\'oz chiqindi yuborildi', amount: '+3,500 so\'m' },
-                { date: '2024-01-10', action: 'Metal chiqindi yuborildi', amount: '+8,000 so\'m' }
+                {
+                  date: "2024-01-15",
+                  action: "Plastik chiqindi yuborildi",
+                  amount: "+5,000 so'm",
+                },
+                {
+                  date: "2024-01-12",
+                  action: "Qog'oz chiqindi yuborildi",
+                  amount: "+3,500 so'm",
+                },
+                {
+                  date: "2024-01-10",
+                  action: "Metal chiqindi yuborildi",
+                  amount: "+8,000 so'm",
+                },
               ].map((activity, index) => (
-                <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 rounded-lg bg-muted/50"
+                >
                   <div>
                     <p className="font-medium">{activity.action}</p>
                     <p className="text-sm text-muted-foreground">{activity.date}</p>
