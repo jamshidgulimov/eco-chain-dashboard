@@ -26,8 +26,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* Лепестки на фоне всех страниц */}
-          <FallingLeaves count={35} />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/user" element={<UserDashboard />} />

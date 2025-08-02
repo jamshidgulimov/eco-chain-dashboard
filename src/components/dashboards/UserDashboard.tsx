@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 
 const UserDashboard = () => {
   const { logout } = useAuth();
@@ -89,7 +90,8 @@ const UserDashboard = () => {
       commentPlaceholder: "Chiqindi haqida qo'shimcha ma'lumot...",
       submit: "Yuborish",
       recent: "So'nggi faoliyat",
-      cardDate: "Amal qilish muddati (MM/YY)"
+      cardDate: "Amal qilish muddati (MM/YY)",
+      mapLanguage: "Yig'indi punktlari xaritasi"
     },
     ru: {
       dashboard: "Панель пользователя",
@@ -110,7 +112,8 @@ const UserDashboard = () => {
       commentPlaceholder: "Дополнительная информация об отходах...",
       submit: "Отправить",
       recent: "Последняя активность",
-      cardDate: "Срок действия (ММ/ГГ)"
+      cardDate: "Срок действия (ММ/ГГ)",
+      mapLanguage: "Карта пунктов приёма"
     },
     en: {
       dashboard: "User Dashboard",
@@ -131,7 +134,8 @@ const UserDashboard = () => {
       commentPlaceholder: "Additional information about waste...",
       submit: "Submit",
       recent: "Recent Activity",
-      cardDate: "Validity period (MM/YY)"
+      cardDate: "Validity period (MM/YY)",
+      mapLanguage: "Map of collection points"
     },
   }[language];
 
@@ -172,12 +176,12 @@ const UserDashboard = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 gap-2 w-30 sm:w-auto">
             <Select
               value={language}
               onValueChange={(val) => setLanguage(val as any)}
             >
-              <SelectTrigger className="w-24 h-9 text-sm">
+              <SelectTrigger className="w-full sm:w-24 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -189,13 +193,14 @@ const UserDashboard = () => {
 
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => {
                 logout();
                 navigate("/");
               }}
             >
               {t.logout}
-              <LogOut />
+              <LogOut className="ml-1 w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -224,78 +229,81 @@ const UserDashboard = () => {
                   <span>{t.weight}: 12 kg</span>
                 </div>
               </div>
-<Dialog>
-  <DialogTrigger asChild>
-    <Button className="w-full text-lg mt-20">{t.send}</Button>
-  </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Kartaga pul yechish</DialogTitle>
-    </DialogHeader>
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="cardNumber">Karta raqami (16 raqam)</Label>
-        <Input
-          id="cardNumber"
-          type="text"
-          inputMode="numeric"
-          pattern="\d*"
-          placeholder="0000 0000 0000 0000"
-          value={cardNumber}
-          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
-          maxLength={16}
-        />
-      </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="w-full text-lg mt-20">{t.send}</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Kartaga pul yechish</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="cardNumber">
+                        Karta raqami (16 raqam)
+                      </Label>
+                      <Input
+                        id="cardNumber"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        placeholder="0000 0000 0000 0000"
+                        value={cardNumber}
+                        onChange={(e) =>
+                          setCardNumber(e.target.value.replace(/\D/g, ""))
+                        }
+                        maxLength={16}
+                      />
+                    </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="cardDate">{t.cardDate}</Label>
-        <Input
-          id="cardDate"
-          type="text"
-          inputMode="numeric"
-          placeholder="MM/YY"
-          className="w-28"
-          value={cardDate}
-          onChange={(e) => {
-            let value = e.target.value.replace(/\D/g, "");
+                    <div className="space-y-1">
+                      <Label htmlFor="cardDate">{t.cardDate}</Label>
+                      <Input
+                        id="cardDate"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="MM/YY"
+                        className="w-28"
+                        value={cardDate}
+                        onChange={(e) => {
+                          let value = e.target.value.replace(/\D/g, "");
 
-            if (value.length >= 3) {
-              value = value.slice(0, 2) + "/" + value.slice(2, 4);
-            }
+                          if (value.length >= 3) {
+                            value = value.slice(0, 2) + "/" + value.slice(2, 4);
+                          }
 
-            setCardDate(value);
-          }}
-          maxLength={5}
-        />
-      </div>
-    </div>
+                          setCardDate(value);
+                        }}
+                        maxLength={5}
+                      />
+                    </div>
+                  </div>
 
-    <DialogFooter>
-      <Button
-        onClick={() => {
-          if (!cardNumber || !cardDate) {
-            toast({
-              title: "⚠️",
-              description: "Ma'lumotlar to‘liq emas",
-            });
-            return;
-          }
+                  <DialogFooter>
+                    <Button
+                      onClick={() => {
+                        if (!cardNumber || !cardDate) {
+                          toast({
+                            title: "⚠️",
+                            description: "Ma'lumotlar to‘liq emas",
+                          });
+                          return;
+                        }
 
-          toast({
-            title: "✅ So'rov yuborildi",
-            description: "Pul yechish so‘rovi qabul qilindi!",
-          });
+                        toast({
+                          title: "✅ So'rov yuborildi",
+                          description: "Pul yechish so‘rovi qabul qilindi!",
+                        });
 
-          setCardNumber("");
-          setCardDate("");
-        }}
-      >
-        Yuborish
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
+                        setCardNumber("");
+                        setCardDate("");
+                      }}
+                    >
+                      Yuborish
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
@@ -427,6 +435,26 @@ const UserDashboard = () => {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2 mt-6">
+          <CardHeader>
+            <CardTitle>{t.mapLanguage}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <YMaps>
+              <Map
+                defaultState={{
+                  center: [41.2995, 69.2401], // Ташкент
+                  zoom: 11,
+                }}
+                width="100%"
+                height="400px"
+              >
+                {/* Пример Placemark */}
+                <Placemark geometry={[41.3055, 69.2461]} />
+              </Map>
+            </YMaps>
           </CardContent>
         </Card>
       </div>
