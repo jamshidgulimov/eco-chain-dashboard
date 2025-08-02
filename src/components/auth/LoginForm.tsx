@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Leaf, Recycle, Factory } from "lucide-react";
+import { Leaf, Recycle, Factory, EyeOff, Eye } from "lucide-react";
+import axios from "axios";
 
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,14 +28,20 @@ const LoginForm = () => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [role, setRole] = useState<"user" | "collection-point" | "factory">("user");
+  const [role, setRole] = useState<"user" | "collection-point" | "factory">(
+    "user"
+  );
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<"uz" | "ru" | "en">("uz");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("ecochain-lang") as "uz" | "ru" | "en";
+    const savedLang = localStorage.getItem("ecochain-lang") as
+      | "uz"
+      | "ru"
+      | "en";
     if (savedLang) setLanguage(savedLang);
   }, []);
 
@@ -90,38 +97,77 @@ const LoginForm = () => {
     },
   }[language];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    if (isLogin) {
-      if (!email || !password) {
-        setError(t.error);
-        return;
-      }
-
-      localStorage.setItem("ecochain-username", email);
-
-      if (role === "user") navigate("/user");
-      else if (role === "collection-point") navigate("/collection-point");
-      else if (role === "factory") navigate("/factory");
-    } else {
-      if (!email || !password || !fullName) {
-        setError(t.error);
-        return;
-      }
-
-      alert(t.success);
-
-      setEmail("");
-      setPassword("");
-      setFullName("");
-      setPhone("");
-      setAddress("");
-      setCompanyName("");
-      setRole("user");
+  if (isLogin) {
+    if (!email || !password) {
+      setError(t.error);
+      return;
     }
-  };
+
+    try {
+      const res = await axios.post("http://192.168.137.1:3000/api/login", {
+        login: email,
+        password,
+      });
+
+      const data = res.data;
+
+      if (data.status === "ok" && data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("ecochain-username", email);
+
+        if (role === "user") navigate("/user");
+        else if (role === "collection-point") navigate("/collection-point");
+        else if (role === "factory") navigate("/factory");
+      } else {
+        setError(data.message || "Login yoki parol noto‘g‘ri");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError("Xatolik yuz berdi (API ulanmagan)");
+    }
+
+  } else {
+    // РЕГИСТРАЦИЯ
+    if (!email || !password || !fullName || !phone || !address) {
+      setError(t.error);
+      return;
+    }
+
+    try {
+      const res = await axios.post("http://192.168.137.1:3000/api/register", {
+        login: email,
+        password,
+        fullname: fullName,
+        phone,
+        location: address,
+      });
+
+      const data = res.data;
+
+      if (data.status === "ok") {
+        alert(t.success);
+        setEmail("");
+        setPassword("");
+        setFullName("");
+        setPhone("");
+        setAddress("");
+        setCompanyName("");
+        setRole("user");
+        setIsLogin(true); // Переключиться обратно на login после успешной регистрации
+      } else {
+        setError(data.message || "Ro‘yxatdan o‘tishda xatolik");
+      }
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError("Ro‘yxatdan o‘tishda xatolik (API ulanmagan)");
+    }
+  }
+};
+
 
   const getRoleDescription = (roleType: string) => {
     const desc = {
@@ -149,7 +195,10 @@ const LoginForm = () => {
       <Card className="w-full max-w-md relative">
         {/* Language selector in top-right corner */}
         <div className="absolute top-3 right-3 z-10">
-          <Select value={language} onValueChange={(val) => setLanguage(val as any)}>
+          <Select
+            value={language}
+            onValueChange={(val) => setLanguage(val as any)}
+          >
             <SelectTrigger className="w-20 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -167,7 +216,9 @@ const LoginForm = () => {
               <Leaf className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-eco-dark">EcoChain Dashboard</CardTitle>
+          <CardTitle className="text-2xl font-bold text-eco-dark">
+            EcoChain Dashboard
+          </CardTitle>
           <CardDescription>Eco solution system</CardDescription>
         </CardHeader>
 
@@ -176,14 +227,18 @@ const LoginForm = () => {
             <Button
               type="button"
               onClick={() => setIsLogin(true)}
-              className={isLogin ? "bg-primary text-white" : "bg-muted text-black"}
+              className={
+                isLogin ? "bg-primary text-white" : "bg-muted text-black"
+              }
             >
               {t.login}
             </Button>
             <Button
               type="button"
               onClick={() => setIsLogin(false)}
-              className={!isLogin ? "bg-primary text-white" : "bg-muted text-black"}
+              className={
+                !isLogin ? "bg-primary text-white" : "bg-muted text-black"
+              }
             >
               {t.register}
             </Button>
@@ -192,14 +247,23 @@ const LoginForm = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>{t.userType}</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as any)}>
+              <Select
+                value={role}
+                onValueChange={(value) => setRole(value as any)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">{getRoleDescription("user")}</SelectItem>
-                  <SelectItem value="collection-point">{getRoleDescription("collection-point")}</SelectItem>
-                  <SelectItem value="factory">{getRoleDescription("factory")}</SelectItem>
+                  <SelectItem value="user">
+                    {getRoleDescription("user")}
+                  </SelectItem>
+                  <SelectItem value="collection-point">
+                    {getRoleDescription("collection-point")}
+                  </SelectItem>
+                  <SelectItem value="factory">
+                    {getRoleDescription("factory")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -207,42 +271,86 @@ const LoginForm = () => {
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="fullName">{t.fullName}</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                <Input
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
               </div>
             )}
 
             <div className="space-y-2">
               <Label htmlFor="email">{t.username}</Label>
-              <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input
+                id="email"
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">{t.password}</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10" // чтобы у иконки было место
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             {!isLogin && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t.phone}</Label>
-                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="address">{t.address}</Label>
-                  <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
                 </div>
 
                 {(role === "collection-point" || role === "factory") && (
                   <div className="space-y-2">
                     <Label htmlFor="companyName">{t.company}</Label>
-                    <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                    <Input
+                      id="companyName"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
                   </div>
                 )}
               </>
             )}
 
-            {error && <div className="text-destructive text-sm text-center">{error}</div>}
+            {error && (
+              <div className="text-destructive text-sm text-center">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" className="w-full">
               {t.submit}

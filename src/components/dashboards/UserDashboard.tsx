@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Wallet,
@@ -22,6 +28,14 @@ import {
   Award,
   LogOut,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -35,13 +49,19 @@ const UserDashboard = () => {
   });
   const [username, setUsername] = useState("");
   const [language, setLanguage] = useState<"uz" | "ru" | "en">("uz");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardDate, setCardDate] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const savedUsername = localStorage.getItem("ecochain-username");
     if (savedUsername) setUsername(savedUsername);
 
-    const savedLang = localStorage.getItem("ecochain-lang") as "uz" | "ru" | "en";
+    const savedLang = localStorage.getItem("ecochain-lang") as
+      | "uz"
+      | "ru"
+      | "en";
     if (savedLang) setLanguage(savedLang);
   }, []);
 
@@ -63,11 +83,13 @@ const UserDashboard = () => {
       uploadImage: "Rasm yuklash",
       uploadVideo: "Video yuklash",
       location: "Joylashuv",
+      send: "Pulni yechish",
       locationPlaceholder: "Chiqindi joylashgan manzilni kiriting",
       comment: "Izoh",
       commentPlaceholder: "Chiqindi haqida qo'shimcha ma'lumot...",
       submit: "Yuborish",
       recent: "So'nggi faoliyat",
+      cardDate: "Amal qilish muddati (MM/YY)"
     },
     ru: {
       dashboard: "Панель пользователя",
@@ -80,6 +102,7 @@ const UserDashboard = () => {
       sendWaste: "Отправка отходов",
       wasteDesc: "Отправьте информацию и изображения об отходах",
       uploadImage: "Загрузить изображение",
+      send: "Вывести средства",
       uploadVideo: "Загрузить видео",
       location: "Локация",
       locationPlaceholder: "Введите адрес отходов",
@@ -87,6 +110,7 @@ const UserDashboard = () => {
       commentPlaceholder: "Дополнительная информация об отходах...",
       submit: "Отправить",
       recent: "Последняя активность",
+      cardDate: "Срок действия (ММ/ГГ)"
     },
     en: {
       dashboard: "User Dashboard",
@@ -97,6 +121,7 @@ const UserDashboard = () => {
       points: "Eco Points",
       weight: "Waste Sent",
       sendWaste: "Send Waste",
+      send: "Send to Card",
       wasteDesc: "Send info and media about the waste",
       uploadImage: "Upload Image",
       uploadVideo: "Upload Video",
@@ -106,6 +131,7 @@ const UserDashboard = () => {
       commentPlaceholder: "Additional information about waste...",
       submit: "Submit",
       recent: "Recent Activity",
+      cardDate: "Validity period (MM/YY)"
     },
   }[language];
 
@@ -147,7 +173,10 @@ const UserDashboard = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <Select value={language} onValueChange={(val) => setLanguage(val as any)}>
+            <Select
+              value={language}
+              onValueChange={(val) => setLanguage(val as any)}
+            >
               <SelectTrigger className="w-24 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -166,7 +195,7 @@ const UserDashboard = () => {
               }}
             >
               {t.logout}
-              <LogOut/>
+              <LogOut />
             </Button>
           </div>
         </div>
@@ -185,7 +214,7 @@ const UserDashboard = () => {
               <div className="text-3xl font-bold text-primary mb-4">
                 248 000 so'm
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 mb-20">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Award className="h-4 w-4" />
                   <span>{t.points}: 150</span>
@@ -195,6 +224,78 @@ const UserDashboard = () => {
                   <span>{t.weight}: 12 kg</span>
                 </div>
               </div>
+<Dialog>
+  <DialogTrigger asChild>
+    <Button className="w-full text-lg mt-20">{t.send}</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Kartaga pul yechish</DialogTitle>
+    </DialogHeader>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <Label htmlFor="cardNumber">Karta raqami (16 raqam)</Label>
+        <Input
+          id="cardNumber"
+          type="text"
+          inputMode="numeric"
+          pattern="\d*"
+          placeholder="0000 0000 0000 0000"
+          value={cardNumber}
+          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
+          maxLength={16}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label htmlFor="cardDate">{t.cardDate}</Label>
+        <Input
+          id="cardDate"
+          type="text"
+          inputMode="numeric"
+          placeholder="MM/YY"
+          className="w-28"
+          value={cardDate}
+          onChange={(e) => {
+            let value = e.target.value.replace(/\D/g, "");
+
+            if (value.length >= 3) {
+              value = value.slice(0, 2) + "/" + value.slice(2, 4);
+            }
+
+            setCardDate(value);
+          }}
+          maxLength={5}
+        />
+      </div>
+    </div>
+
+    <DialogFooter>
+      <Button
+        onClick={() => {
+          if (!cardNumber || !cardDate) {
+            toast({
+              title: "⚠️",
+              description: "Ma'lumotlar to‘liq emas",
+            });
+            return;
+          }
+
+          toast({
+            title: "✅ So'rov yuborildi",
+            description: "Pul yechish so‘rovi qabul qilindi!",
+          });
+
+          setCardNumber("");
+          setCardDate("");
+        }}
+      >
+        Yuborish
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
             </CardContent>
           </Card>
 
@@ -316,9 +417,13 @@ const UserDashboard = () => {
                 >
                   <div>
                     <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">{activity.date}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {activity.date}
+                    </p>
                   </div>
-                  <span className="font-semibold text-success">{activity.amount}</span>
+                  <span className="font-semibold text-success">
+                    {activity.amount}
+                  </span>
                 </div>
               ))}
             </div>

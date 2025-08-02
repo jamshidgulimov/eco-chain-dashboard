@@ -14,6 +14,9 @@ import UserDashboard from "./components/dashboards/UserDashboard";
 import CollectionPointDashboard from "./components/dashboards/CollectionPointDashboard";
 import FactoryDashboard from "./components/dashboards/FactoryDashboard";
 
+// Анимация падающих лепестков
+import FallingLeaves from "./components/FallingLeaves";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -23,12 +26,13 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          {/* Лепестки на фоне всех страниц */}
+          <FallingLeaves count={35} />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/user" element={<UserDashboard />} />
             <Route path="/collection-point" element={<CollectionPointDashboard />} />
             <Route path="/factory" element={<FactoryDashboard />} />
-            {/* универсальная ошибка для всех остальных путей */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
